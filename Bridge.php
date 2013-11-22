@@ -5,8 +5,8 @@ abstract class Bridge
 
   public $entity;
   public $values;
-  protected $condition;
-  protected $join;
+  public $condition;
+  public $join;
   public $orders;
   protected $group;
   public $limit;
@@ -14,6 +14,7 @@ abstract class Bridge
   protected $counter;
   public $meta;
   public $variant;
+  public $union;
 
   public $insert_batch_data;
   public $insert_batch_attributes;
@@ -30,6 +31,7 @@ abstract class Bridge
     $this->condition = array();
     $this->values = array();
     $this->join = array();
+    $this->union = array();
 
     $this->entity = array();
     $this->counter = 0;
@@ -87,9 +89,9 @@ abstract class Bridge
 
   public function info()
   {
-    
+
     $str = "Entities:" . count($this->entity) . PHP_EOL;
-    
+
     foreach ($this->entity as $hash => $e)
       {
 	$str .= $e->sql() . PHP_EOL;
@@ -98,7 +100,7 @@ abstract class Bridge
     foreach ($this->condition as $c)
       {
 	$str .= $c[0] ." ". $c[1]." ".  $c[2]. PHP_EOL;
-      }  
+      }
     return $str;
   }
 
@@ -138,9 +140,9 @@ abstract class Bridge
       {
 	foreach ($e->_attr as $n => $a)
 	  {
-	    if (!$a->active) { 
+	    if (!$a->active) {
 	      Log::dbg("assigning inactive attr " . $a->name);
-	      continue; 
+	      continue;
 	    }
 	    Log::dbg("assigning active attr " . $a->name);
 
@@ -181,7 +183,7 @@ abstract class Bridge
   }
 
   function insert_batch($e)
-  {    
+  {
     $sql = $this->assign_attribute($e);
 
     $this->insert_batch_data[] = $sql->assign_attributes;
@@ -197,6 +199,7 @@ abstract class Bridge
   abstract function assign();
   abstract function pkcond($e);
 
+  abstract function union($e);
   abstract function select($e);
   abstract function insert($e);
   abstract function insert_batch_flush($e);

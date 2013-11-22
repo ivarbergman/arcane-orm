@@ -4,8 +4,9 @@
 class MySQL extends Bridge
 {
 
+
   function expr_list()
-  {    
+  {
     $sql = "";
     $sep = "";
     foreach ($this->entity as $idx => $e)
@@ -17,19 +18,19 @@ class MySQL extends Bridge
     return $sql;
   }
   function expr($e)
-  {    
+  {
 
     $sql = "";
     $sep = "";
 
     $attr = array_merge(array_keys($e->_etx),
-			array_keys($e->_col)); 
+			array_keys($e->_col));
 
     foreach ($attr as $name)
       {
 	$a = $e->alias();
 	$n = $e->name();
-	$v = $e->_attr[$name]; 
+	$v = $e->_attr[$name];
 
 	if (! $v instanceof Attribute)
 	  {
@@ -69,13 +70,13 @@ class MySQL extends Bridge
   }
 
   function refs()
-  {    
+  {
     $sql = "";
     $s = "";
 
     $sep = "";
-    $on = ""; 
-    
+    $on = "";
+
     $entity_ids = array_flip(array_keys($this->entity));
     foreach ($this->join as $idx => $j)
       {
@@ -87,14 +88,14 @@ class MySQL extends Bridge
 	    $pk = $rh->pk();
 	    $fk = $lh->$fk_name;
 	    $on = " {$pk->sql()} = {$fk->sql()} ";
-	  } 
+	  }
 	else if (isset($rh->_rel[$lh->name()]))
 	  {
 	    $fk_name = $rh->_rel[$lh->name()];
 	    $pk = $lh->pk();
 	    $fk = $rh->$fk_name;
 	    $on = " {$pk->sql()} = {$fk->sql()} ";
-	  } 
+	  }
 	$on = $on ? " ON ( $on ) ":"";
 	if ($idx == 0)
 	  {
@@ -119,7 +120,7 @@ class MySQL extends Bridge
   }
 
   function cond()
-  {    
+  {
     $str = "";
     $s = "";
     foreach ($this->condition as $c)
@@ -225,12 +226,12 @@ class MySQL extends Bridge
   }
 
   function collate()
-  {    
+  {
     return "";
   }
 
   function limit()
-  {    
+  {
     $sql = $this->limit ? " LIMIT ".$this->limit : "";
     if ($sql && isset($this->page))
       {
@@ -278,7 +279,7 @@ class MySQL extends Bridge
 
 
   function select($e)
-  {    
+  {
 
     $sql = sprintf("SELECT %s %s \nFROM %s \n%s %s %s %s %s;",
 		   $this->select_variant(),
@@ -289,16 +290,42 @@ class MySQL extends Bridge
 		   $this->group(),
 		   $this->order(),
 		   $this->limit());
-    
-    return $sql;		   
+
+    return $sql;
+  }
+
+  function union($e)
+  {
+
+    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s %s %s %s ) ",
+		   $this->select_variant(),
+		   $this->expr_list(),
+		   $this->refs(),
+		   $this->cond(),
+		   $this->collate(),
+		   $this->group(),
+		   $this->order(),
+		   $this->limit());
+
+    $this->union[] = $sql;
+    $this->entity = array();
+    $this->condition = array();
+    $this->join = array();
+
+    return $sql;
+  }
+
+  function select_union()
+  {
+      return implode($this->union, ' UNION ');
   }
 
   function insert($e)
-  {    
+  {
     $sql = sprintf("INSERT INTO %s %s ",
 		   $e->name(),
 		   $this->values($e));
-    
+
     if ($e->on_duplicate_update())
       {
 	$sql .= sprintf("ON DUPLICATE KEY UPDATE %s",
@@ -307,12 +334,12 @@ class MySQL extends Bridge
 
     $sql .= ";";
 
-    return $sql;		   
+    return $sql;
   }
 
   function insert_batch_flush($e)
-  {    
-    
+  {
+
     $values = array();
     foreach ($this->insert_batch_data as $data)
       {
@@ -328,7 +355,7 @@ class MySQL extends Bridge
 		   $e->name(),
 		   join($this->insert_batch_attributes, ', '),
  		   join($values, ', '));
-    
+
     if ($e->on_duplicate_update())
       {
 	$dsql = array();
@@ -338,58 +365,58 @@ class MySQL extends Bridge
 	  }
 	$sql .= sprintf("ON DUPLICATE KEY UPDATE %s", join($dsql, ','));
       }
-    
+
     $sql .= ";";
-    
+
     $this->insert_batch_data = array();
     $this->insert_batch_attributes = array();
-    return $sql;		   
+    return $sql;
   }
 
   function replace($e)
-  {    
+  {
     $sql = sprintf("REPLACE INTO %s %s ",
 		   $e->name(),
 		   $this->values($e));
-    
+
     $sql .= ";";
 
-    return $sql;		   
+    return $sql;
   }
 
   function update()
-  {    
+  {
     $sql = sprintf("UPdate %s SET %s %s;",
 		   $this->refs(),
 		   $this->assign(),
 		   $this->cond());
-    return $sql;		   
+    return $sql;
   }
 
   function delete($e)
-  {    
+  {
     $sql = sprintf("DELETE %s.* FROM %s %s;",
 		   $e->alias(),
 		   $this->refs(),
 		   $this->cond($e));
-    return $sql;		   
+    return $sql;
   }
 
   function save($e)
-  {    
+  {
     $sql = sprintf("UPDate %s SET %s WHERE %s;",
 		   $e->name(),
 		   $this->assign($e, false),
 		   $this->pkcond($e));
-    return $sql;		   
+    return $sql;
   }
 
   function remove($e)
-  {    
+  {
     $sql = sprintf("DELETE FROM %s WHERE %s;",
 		   $e->name(),
 		   $this->pkcond($e));
-    return $sql;		   
+    return $sql;
   }
 
 

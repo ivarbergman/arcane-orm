@@ -28,12 +28,12 @@ class Schema
       {
 	//Log::dbg("db schema include local: " . $GLOBALS["ARCANE_MODEL_PATH"].$schema->database_alias."_api_local.php");
 	include_once($GLOBALS["ARCANE_MODEL_PATH"].$schema->database_alias."_api_local.php");
-      }     
+      }
     else if (file_exists($GLOBALS["ARCANE_OUT_PATH"].$schema->database_alias."_api_local.php"))
       {
 	//Log::dbg("db schema include local2: " . $GLOBALS["ARCANE_OUT_PATH"].$schema->database_alias."_api_local.php");
 	include_once($GLOBALS["ARCANE_OUT_PATH"].$schema->database_alias."_api_local.php");
-      }     
+      }
   }
 
   function __construct($pdox)
@@ -54,12 +54,12 @@ class Schema
     $this->pdox->execute("select @CS:='CS_SEED_STR';");
     $this->pdox->execute("select @CS:=MD5(CONCAT(TABLE_NAME, CREATE_TIME, @CS)) from information_schema.tables where TABLE_SCHEMA=:database;", array("database" => $this->database));
     $result = $this->pdox->fetch("select @CS as CS;");
-    $this->cs = $result[0]["CS"]; 
+    $this->cs = $result[0]["CS"];
     if ($cs == $this->cs)
       {
 	return true;
       }
-  
+
     return false;
   }
 
@@ -108,120 +108,60 @@ class Schema
     $relations = array();
     while ($kcu->next())
       {
-	$relations[$kcu->TABLE_NAME][] = $kcu->_result->toArray();
+          $relations[$kcu->TABLE_NAME][] = $kcu->_result->toArray();
       }
 
     $kcu = $dbis->key_column_usage();
     $kcu->TABLE_SCHEMA->eq = $this->database;
     $rev_relations = array();
     while ($kcu->next())
-      {
-	$rev_relations[$kcu->REFERENCED_TABLE_NAME][] = $kcu->_result->toArray();
+    {
+        $rev_relations[$kcu->REFERENCED_TABLE_NAME][] = $kcu->_result->toArray();
       }
 
     foreach ($schema as $t => $a)
-      {
-	foreach ($columns[$t] as $idx => $col) {
+    {
+        foreach (@$columns[$t] as $idx => $col) {
 
-	  $schema[$t]["col"][$col['COLUMN_NAME']] = $col['DATA_TYPE'];
-	  if ($col['COLUMN_KEY'] == 'PRI')
-	    {
-	      $schema[$t]["pri"][] = $col['COLUMN_NAME'];
-	    }
-	  
-	  if ($col['COLUMN_KEY'] == 'PRI' && $col['EXTRA'] == 'auto_increment')
-	    {
-	      $schema[$t]["auto"] = $col['COLUMN_NAME'];
-	    }
-	  
-	  if ($col['COLUMN_KEY'] == 'PRI' && $col['COLUMN_TYPE'] == 'char(36)')
-	    {
-	      $schema[$t]["uuid"] = $col['COLUMN_NAME'];
-	    }	  
-	}
+            $schema[$t]["col"][$col['COLUMN_NAME']] = $col['DATA_TYPE'];
+            if ($col['COLUMN_KEY'] == 'PRI')
+            {
+                $schema[$t]["pri"][] = $col['COLUMN_NAME'];
+            }
 
-	foreach ($relations[$t] as $idx => $rel) {
-	  
-	  if (!is_null($rel['REFERENCED_TABLE_NAME']))
-	    {
-	      $schema[$t]["rel"][$rel['REFERENCED_TABLE_NAME']] = $rel['COLUMN_NAME'];
-	    }
-	  
-	}
-	foreach ($rev_relations[$t] as $idx => $rel) {
-	  
-	  if (!is_null($rel['TABLE_NAME']))
-	    {
-	      $schema[$t]["rev"][$rel['TABLE_NAME']] = $rel['COLUMN_NAME'];
-	    }	  
-	  
-	}
-	/*	
-	$col = $dbis->columns();
-	$col->TABLE_SCHEMA->eq = $this->database;
-	$col->TABLE_NAME->eq = $t;
-	while ($col->next())
-	  {
-	    $schema[$t]["col"][$col->COLUMN_NAME] = $col->DATA_TYPE;
-	  }
+            if ($col['COLUMN_KEY'] == 'PRI' && $col['EXTRA'] == 'auto_increment')
+            {
+                $schema[$t]["auto"] = $col['COLUMN_NAME'];
+            }
 
-	$pri = $dbis->columns();
-	$pri->TABLE_SCHEMA->eq = $this->database;
-	$pri->TABLE_NAME->eq = $t;
-	$pri->COLUMN_KEY->eq = "PRI";
-	$schema[$t]["pri"] = null;
-	while ($pri->next())
-	  {
-	    $schema[$t]["pri"][] = $pri->COLUMN_NAME;
-	  }
+            if ($col['COLUMN_KEY'] == 'PRI' && $col['COLUMN_TYPE'] == 'char(36)')
+            {
+                $schema[$t]["uuid"] = $col['COLUMN_NAME'];
+            }
+        }
 
-	$auto = $dbis->columns();
-	$auto->TABLE_SCHEMA->eq = $this->database;
-	$auto->TABLE_NAME->eq = $t;
-	$auto->COLUMN_KEY->eq = "PRI";
-	$auto->EXTRA->eq = "auto_increment";
-	$schema[$t]["auto"] = null;
-	while ($auto->next())
-	  {
-	    $schema[$t]["auto"] = $auto->COLUMN_NAME;
-	  }
+        if (isset($relations[$t]))
+        {
+            foreach ($relations[$t] as $idx => $rel) {
 
-	$uuid = $dbis->columns();
-	$uuid->TABLE_SCHEMA->eq = $this->database;
-	$uuid->TABLE_NAME->eq = $t;
-	$uuid->COLUMN_KEY->eq = "PRI";
-	$uuid->COLUMN_TYPE->eq = "char(36)";
-	$schema[$t]["uuid"] = null;
-	while ($uuid->next())
-	  {
-	    $schema[$t]["uuid"] = $uuid->COLUMN_NAME;
-	  }
+                if (!is_null($rel['REFERENCED_TABLE_NAME']))
+                {
+                    $schema[$t]["rel"][$rel['REFERENCED_TABLE_NAME']] = $rel['COLUMN_NAME'];
+                }
+            }
+        }
+        if (isset($rev_relations[$t]))
+        {
+            foreach (@$rev_relations[$t] as $idx => $rel) {
 
+                if (!is_null($rel['TABLE_NAME']))
+                {
+                    $schema[$t]["rev"][$rel['TABLE_NAME']] = $rel['COLUMN_NAME'];
+                }
 
-
-	$rel = $dbis->key_column_usage();
-	$rel->TABLE_SCHEMA->eq = $this->database;
-	$rel->TABLE_NAME->eq = $t;
-	$rel->REFERENCED_TABLE_NAME->not->is = null;
-	$schema[$t]["rel"] = array();
-	while ($rel->next())
-	  {
-	    $schema[$t]["rel"][$rel->REFERENCED_TABLE_NAME] = $rel->COLUMN_NAME;
-	  }
-
-	$rev = $dbis->key_column_usage();
-	$rev->TABLE_SCHEMA->eq = $this->database;
-	$rev->REFERENCED_TABLE_NAME->eq = $t;
-	$rev->TABLE_NAME->not->is = null;
-	$schema[$t]["rev"] = array();
-	while ($rev->next())
-	  {
-	    $schema[$t]["rev"][$rev->TABLE_NAME] = $rev->COLUMN_NAME;
-	  }
-
-	*/
-
-      }
+            }
+        }
+    }
 
     Log::dbg($schema);
 

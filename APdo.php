@@ -42,11 +42,11 @@ class APdo extends PDO
   {
     $key = 'APdo_'.(isset($prop["DB_HOST"]) ? $prop["DB_HOST"] : $GLOBALS["DB_HOST"]);
     $key .= '_'.(isset($prop["DB_DATABASE"]) ? $prop["DB_DATABASE"] : $GLOBALS["DB_DATABASE"]);
-    
+
 
     if (isset($_REQUEST[$key]) == false)
       {
-	$_REQUEST[$key] = new APdo($prop, $alias);	
+	$_REQUEST[$key] = new APdo($prop, $alias);
       }
     return $_REQUEST[$key];
   }
@@ -59,13 +59,13 @@ class APdo extends PDO
     $this->user     = array_key_exists("DB_USER", $prop) ? $prop["DB_USER"] : $GLOBALS["DB_USER"];
     $this->passwd   = array_key_exists("DB_PASSWD", $prop) ? $prop["DB_PASSWD"] : $GLOBALS["DB_PASSWD"];
     $this->database = array_key_exists("DB_DATABASE", $prop) ? $prop["DB_DATABASE"] : $GLOBALS["DB_DATABASE"];
-    $this->prefix   = array_key_exists("DB_DEFAULT_PREFIX", $prop) ? $prop["DB_DEFAULT_PREFIX"] : 
+    $this->prefix   = array_key_exists("DB_DEFAULT_PREFIX", $prop) ? $prop["DB_DEFAULT_PREFIX"] :
       ( array_key_exists("DB_DEFAULT_PREFIX", $GLOBALS) ? $GLOBALS["DB_DEFAULT_PREFIX"] : $this->prefix );
     $this->database_alias = $alias ?: $this->database;
 
     if ($this->server == "PGSQL")
       {
-	$this->dsn = "pgsql:host={$this->host} port=5432 dbname={$this->database}"; 
+	$this->dsn = "pgsql:host={$this->host} port=5432 dbname={$this->database}";
       }
     else
       {
@@ -81,7 +81,7 @@ class APdo extends PDO
     $this->driver = strtoupper($this->getAttribute(PDO::ATTR_DRIVER_NAME));
 
 
-  }  
+  }
 
 
   function close()
@@ -93,8 +93,8 @@ class APdo extends PDO
     return true;
   }
 
-  function prepare($str, $args = array()) 
-  {    
+  function prepare($str, $args = array())
+  {
     //Log::dbg("APdo prepare ".$this->dsn);
     $s = parent::prepare($str);
     if (!$s)
@@ -106,8 +106,8 @@ class APdo extends PDO
     return $s;
   }
 
-  function batch($str, $args = array()) 
-  {    
+  function batch($str, $args = array())
+  {
     $lines = preg_split("/[;]/", $str);
     $result = true;
     foreach ($lines as $idx => $line)
@@ -127,15 +127,15 @@ class APdo extends PDO
     return $result;
   }
 
-  function execute($str, $args = array()) 
-  {    
+  function execute($str, $args = array())
+  {
     //Log::dbg("APdo execute ".$this->dsn);
     Log::dbg($str);
     $st = $this->prepare($str, $args);
     $result = $st->execute($args);
-    if (!$return)
+    if (!$result)
       {
-	//Log::dbg($this->errorInfo());
+          //Log::dbg($this->errorInfo());
       }
     return $result;
   }
@@ -159,8 +159,8 @@ class APdo extends PDO
     $this->hooks[] = $hook;
   }
 
-  function begin($clear_hooks = true) 
-  {    
+  function begin($clear_hooks = true)
+  {
     if ($clear_hooks)
       {
 	$this->clear();
@@ -176,8 +176,8 @@ class APdo extends PDO
     return $ok;
   }
 
-  function commit() 
-  {    
+  function commit()
+  {
     $ok = parent::commit();
     foreach ($this->hooks as $h)
       {
@@ -189,8 +189,8 @@ class APdo extends PDO
     return $ok;
   }
 
-  function rollback() 
-  {    
+  function rollback()
+  {
     $ok = parent::rollback();
     foreach ($this->hooks as $h)
       {
@@ -209,7 +209,7 @@ class APdo extends PDO
 
 }
 
-class APdoStatement 
+class APdoStatement
 {
 
   var $stm;
@@ -225,12 +225,12 @@ class APdoStatement
   function __call( $name, $args ) {
     if( method_exists( $this->stm, $name ) )
       {
-	return call_user_func_array(array($this->stm, $name), $args); 
+	return call_user_func_array(array($this->stm, $name), $args);
       }
   }
 
   function __set( $name, $value ) {
-    if( $this->stm && property_exists( $this->stm, $name ) ) 
+    if( $this->stm && property_exists( $this->stm, $name ) )
       {
 	$this->stm->$name = $value;
       }
@@ -238,7 +238,7 @@ class APdoStatement
   }
 
   function __get( $name ) {
-    if( $this->stm && property_exists( $this->stm, $name ) ) 
+    if( $this->stm && property_exists( $this->stm, $name ) )
       {
 	return $this->stm->$name;
       }
@@ -250,7 +250,7 @@ class APdoStatement
 
     $result = $this->stm->execute($args);
     if (!$result)
-	{	  
+	{
 	  $info = $this->stm->errorInfo();
 	  Log::dbg($info[2]);
 	}
@@ -325,7 +325,7 @@ class APdoStatement
 
 }
 
-class PdoHook 
+class PdoHook
 {
   function begin($query)
   {

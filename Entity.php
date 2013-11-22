@@ -6,6 +6,7 @@ class Entity extends Base
   public $_attr = array();
   public $_etx = array();
   public $_relattr = array();
+  public $_union = array();
 
   public $_statement;
   public $_result;
@@ -65,7 +66,7 @@ class Entity extends Base
 	    $o->dir = $dir;
 	    $this->_meta['orders'][] = $o;
 	  }
-      }    
+      }
 
     if (isset($this->_bridge->limit))
       {
@@ -73,8 +74,8 @@ class Entity extends Base
 	if (isset($this->_bridge->page))
 	  {
 	    $this->_meta['page'] = $this->_bridge->page;
-	  }    
-      }    
+	  }
+      }
   }
 
   function reset()
@@ -93,7 +94,7 @@ class Entity extends Base
 	else
 	  {
 
-	  }	
+	  }
       }
 
     if ($this->_bridge)
@@ -128,7 +129,7 @@ class Entity extends Base
       {
 	$args = is_array($args) ? $args : array($args);
 	$this->pk()->eq($args);
-	$this->next();      
+	$this->next();
       }
   }
 
@@ -142,36 +143,36 @@ class Entity extends Base
 	if (  $this->_attr[$name]->is_scalar())
 	  {
 	    return $this->_attr[$name]->value;
-	  }    
+	  }
 	return $this->_attr[$name];
-      } 
+      }
 
     // Has sub-result
     if ( isset( $this->_result) && $this->_result->subset($name) != false )
       {
 	$db = $this->db();
 	$r = $this->_result->subset($name);
-	$o = $db->entity_from_array($name, $r);	    
+	$o = $db->entity_from_array($name, $r);
 	return $o;
-      }    
+      }
 
 
     // Defined relations
     if ( isset( $this->_rel[$name]) == true )
       {
 	return $this->rel($name);
-      }    
+      }
     else if ( isset( $this->_rev[$name]) == true )
       {
 	return $this->rev($name);
-      }    
+      }
 
 
     // If in col or etx, nut not as Attribute insrtance.
     if ( ( isset($this->_col[$name]) || isset($this->_etx[$name]) ) )
       {
 	$this->add_attribute($name);
-      }  
+      }
 
     // If not active and col does not exists.
     if (!$this->_active)
@@ -185,10 +186,10 @@ class Entity extends Base
 
 
     if (!isset($this->_attr[$name]))
-      {     	 
+      {
 	return false;
       }
-    
+
     return $this->_attr[$name];
   }
 
@@ -198,8 +199,8 @@ class Entity extends Base
 
     $type = "scalar";
     if ($value instanceof Attribute)
-      { 
-	$type = "sql";	
+      {
+	$type = "sql";
 	$value = $value->sql();
       }
     else if ($value instanceof Func)
@@ -232,7 +233,7 @@ class Entity extends Base
   {
     $str = "";
 
-    if (!$this->active())  
+    if (!$this->active())
       {
 	return $this->sql();
       }
@@ -273,7 +274,7 @@ class Entity extends Base
   function load()
   {
 
-    if (!$this->active())  
+    if (!$this->active())
       {
 	$q = $this->select();
       }
@@ -283,7 +284,7 @@ class Entity extends Base
 
   /**
    * Return the current result set row as an array matching an entity.
-   * @name 
+   * @name
    */
   function result($name = null, $attr = null)
   {
@@ -381,7 +382,7 @@ class Entity extends Base
 	$this->unfeed();
 	return false;
       }
- 
+
     return true;
   }
 
@@ -395,7 +396,7 @@ class Entity extends Base
 	foreach ($vars as $name => $v)
 	  {
 	    $pk->$name =& $this->$name;
-	  }       
+	  }
       }
     return $pk;
   }
@@ -418,7 +419,7 @@ class Entity extends Base
 	if (isset( $data_array[$name]))
 	  {
 	    $this->$name = $data_array[$name];
-	  }      
+	  }
       }
   }
   function feed($data_array)
@@ -506,8 +507,8 @@ class Entity extends Base
 	$result = $this->execute($sql);
       }
     else
-      {	
-	$this->_bridge->insert_batch($this);      
+      {
+	$this->_bridge->insert_batch($this);
 	$this->reset();
       }
   }
@@ -562,11 +563,25 @@ class Entity extends Base
 
   function select()
   {
-    $this->_active = true;
-    $sql = $this->_bridge->select($this);
-    $result = $this->fetch($sql);
-    return $result;
+      $this->_active = true;
+      $sql = $this->_bridge->select($this);
+      if ($this->_bridge->union)
+      {
+          $sql =' ( '.trim($sql, ';').' ) UNION ';
+          $sql .= $this->_bridge->select_union();
+      }
+
+      $result = $this->fetch($sql);
+      return $result;
   }
+
+  function union()
+  {
+      $this->_active = true;
+      $_sql = $this->_bridge->union($this);
+      return $_sql;
+  }
+
 
   /* Record operations */
   function save()
@@ -600,13 +615,13 @@ class Entity extends Base
     $result = $this->execute($sql);
     return $result;
   }
-  
+
   function key()
   {
     $pk = $this->pk();
     if ($pk)
       {
-	return $pk->value();	
+	return $pk->value();
       }
     return null;
   }
@@ -617,7 +632,7 @@ class Entity extends Base
       {
 	return BaseArcaneDB::db($this->_database);
       }
-    else if ($this->_pdox->database_alias) 
+    else if ($this->_pdox->database_alias)
       {
 	return BaseArcaneDB::db($this->_pdox->database_alias);
       }
@@ -625,8 +640,8 @@ class Entity extends Base
   }
 
   function rel($name)
-  {  
-    
+  {
+
     $o = null;
     if (isset( $this->_rel[$name]) && !isset($this->_relattr[$name]))
       {
@@ -635,20 +650,20 @@ class Entity extends Base
 	if (isset($this->_result) && $this->_result->subset($name))
 	  {
 	    $r = $this->_result->subset($name);
-	    $o = $db->entity_from_array($name, $r);	    
-	  }	  
+	    $o = $db->entity_from_array($name, $r);
+	  }
 	else if ($this->active())
 	  {
 
 	    $fk_name = $this->_rel[$name];
 	    $fk = $this->_attr[$fk_name];
-	    $o = $db->entity($name, null, $this->_pdox, $this->_bridge);	    
+	    $o = $db->entity($name, null, $this->_pdox, $this->_bridge);
 	    $o->_database = $this->_database;
 	    $o->__invoke($fk->value);
 	  }
 	else
 	  {
-	    $o = $db->entity($name, null, $this->_pdox, $this->_bridge);	    
+	    $o = $db->entity($name, null, $this->_pdox, $this->_bridge);
 	    $o->_database = $this->_database;
 	  }
 	$this->_relattr[$name] = $o;
@@ -657,7 +672,7 @@ class Entity extends Base
   }
 
   function rev($name)
-  {  
+  {
 
     $o = null;
     if (isset( $this->_rev[$name]))
@@ -666,8 +681,8 @@ class Entity extends Base
 	if (isset($this->_result) && ( $this->_result->subset($name)))
 	  {
 	    $r = $this->_result->subset($name);
-	    $o = $db->entity_from_array($name, $r);	    
-	  }	  
+	    $o = $db->entity_from_array($name, $r);
+	  }
 	else if ($this->active())
 	  {
 
@@ -679,7 +694,7 @@ class Entity extends Base
 	else
 	  {
 
-	    $o = $db->entity($name, null, $this->_pdox);	    
+	    $o = $db->entity($name, null, $this->_pdox);
 	    $o->_database = $this->_database;
 	  }
       }
@@ -730,7 +745,7 @@ class Entity extends Base
       {
 	$str .= " /* ErrorCode ".$this->_statement->errorCode() . " */\n";
       }
-    
+
     $str .= " /* Active ".$this->active() . " */\n";
     if ($this->active())
       {
@@ -751,7 +766,7 @@ class Entity extends Base
 			   "type" => "list");
     $array["result"] = $this->_result;
 
-    return 
+    return
 
     $array["rows"] = $this->_result->found_rows($this->_pdox);
     $result = json_encode($array);
@@ -767,7 +782,7 @@ class Entity extends Base
     return $result;
   }
 
-  function extend() 
+  function extend()
   {
 
     if ( count($this->_rel) > 0 )
@@ -778,32 +793,32 @@ class Entity extends Base
 	    $e = $this->rel($name);
 	    $this->outer_join($e);
 	  }
-      }    
+      }
   }
 
-  function join($e) 
+  function join($e)
   {
 
-    $this->_bridge->join("JOIN", $this, $e);    
+    $this->_bridge->join("JOIN", $this, $e);
   }
 
-  function outer_join($e) 
+  function outer_join($e)
   {
-    $this->_bridge->join("LEFT OUTER JOIN", $this, $e);    
+    $this->_bridge->join("LEFT OUTER JOIN", $this, $e);
   }
 
 
-  function display($name) 
+  function display($name)
   {
     $result = $this->$name;
     if ($result instanceof Entity)
       {
 	$result = "<span data-op='Select' data-value='{$result->key()}' data-entity='{$result->_name}'>{$result}</span>";
       }
-    return $result;    
+    return $result;
   }
 
-  function odd_even() 
+  function odd_even()
   {
   }
 
@@ -835,14 +850,14 @@ class Entity extends Base
     ob_start();
     $source = "?>". $tlp ."<? ";
 
-    error_reporting(E_ALL | E_STRICT);  
-    set_error_handler('my_eval_error_handler');  
-    $result = eval($source);  
+    error_reporting(E_ALL | E_STRICT);
+    set_error_handler('my_eval_error_handler');
+    $result = eval($source);
     restore_error_handler();
 
     $array["html"] = ob_get_contents();
     ob_end_clean();
-   
+
     return $array;
   }
 
@@ -885,35 +900,35 @@ class Entity extends Base
 
   function page($num = null)
   {
-    if ($this->active())  
+    if ($this->active())
       {
 	if (isset($this->_meta['page']))
 	  {
 	    return $this->_meta['page'];
 	  }
 	return null;
-      }    
+      }
     $this->_bridge->add_page($num);
   }
 
   function limit($num = null)
   {
     Log::dbg("Entity::limit($num = null)");
-    if ($this->active())  
+    if ($this->active())
       {
 	if (isset($this->_meta['limit']))
 	  {
 	    return $this->_meta['limit'];
 	  }
 	return null;
-      }    
+      }
 
     $this->_bridge->add_limit($num);
   }
   function order($name = null, $dir = 'ASC')
   {
 
-    if ($this->active())  
+    if ($this->active())
       {
 	if (isset($this->_meta['orders']))
 	  {
@@ -930,13 +945,13 @@ class Entity extends Base
 	      }
 	  }
 	return null;
-      }    
+      }
 
 
-    if (!$name)  
+    if (!$name)
       {
 	return false;
-      }    
+      }
 
     $ok = true;
     if (isset($this->_attr[$name]) || isset($this->_etx[$name]))
@@ -967,10 +982,10 @@ class Entity extends Base
 	Log::dbg($param);
       }
 
-    $this->_statement = $this->_pdox->prepare($sql);    
+    $this->_statement = $this->_pdox->prepare($sql);
     $this->_statement->execute($param);
 
-    $this->_count = $this->_statement->rowCount();	
+    $this->_count = $this->_statement->rowCount();
     $this->meta();
     if ($this->_statement->errorCode() > 0)
       {
@@ -998,17 +1013,17 @@ class Entity extends Base
 
     if ($this->_cfg_fetch_all)
       {
-	$this->_result = new ResultArray($this->_statement);	
+	$this->_result = new ResultArray($this->_statement);
 	$this->_count = $this->_result->count();
       }
     else
       {
-	$this->_result = new ResultStatement($this->_statement);	
+	$this->_result = new ResultStatement($this->_statement);
 	$this->_count = $this->_result->count($this->_pdox);
       }
 
     Log::dbg("Fetch RowCount " . $this->_count);
-    
+
     return $this->_count;
   }
 
@@ -1028,7 +1043,7 @@ abstract class Result
   {
     if (!isset($this->found_rows))
       {
-	$c = $pdox->fetch("SELECT FOUND_ROWS() AS count;");   
+	$c = $pdox->fetch("SELECT FOUND_ROWS() AS count;");
 	$this->found_rows = (int)$c[0]["count"];
       }
     return $this->found_rows;
@@ -1048,7 +1063,7 @@ abstract class Result
 	foreach ($row as $key => $value)
 	  {
 	    if (strpos($key, $entity_name) === 1 || strpos($key, $entity_name) === 0 )
-	      {		
+	      {
 		$k = substr($key, strlen($entity_name)+2 + strpos($key, $entity_name));
 		$result[$k] = $value;
 	      }
@@ -1081,13 +1096,13 @@ abstract class Result
 
 class ResultArray extends Result
 {
-  
+
   private $data;
   public $pos;
 
   public function __construct($statement)
   {
-    $data = $statement->fetchAll();	
+    $data = $statement->fetchAll();
     $this->data =& $data;
     $this->pos = -1;
   }
@@ -1107,7 +1122,7 @@ class ResultArray extends Result
   public function current()
   {
     $p = ($this->pos < 0) ?  0 : $this->pos;
-    $c = count($this->data); 
+    $c = count($this->data);
 
     if ($p < $c)
       {
@@ -1126,7 +1141,7 @@ class ResultArray extends Result
 
 class ResultStatement extends Result
 {
-  
+
   private $statement;
   private $row;
 
