@@ -564,13 +564,15 @@ class Entity extends Base
   function select()
   {
       $this->_active = true;
-      $sql = $this->_bridge->select($this);
+
       if ($this->_bridge->union)
       {
-          $sql =' ( '.trim($sql, ';').' ) UNION ';
-          $sql .= $this->_bridge->select_union();
+          $sql = $this->_bridge->select_with_union($this);
       }
-
+      else
+      {
+          $sql = $this->_bridge->select($this);
+      }
       $result = $this->fetch($sql);
       return $result;
   }

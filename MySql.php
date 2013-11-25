@@ -297,7 +297,7 @@ class MySQL extends Bridge
   function union($e)
   {
 
-    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s %s %s %s ) ",
+    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s %s %s %s )",
 		   $this->select_variant(),
 		   $this->expr_list(),
 		   $this->refs(),
@@ -315,10 +315,27 @@ class MySQL extends Bridge
     return $sql;
   }
 
-  function select_union()
+  function select_with_union($e)
   {
-      return implode($this->union, ' UNION ');
+
+      $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s ) UNION ",
+                      $this->select_variant(),
+                      $this->expr_list(),
+                      $this->refs(),
+                      $this->cond(),
+                      $this->collate());
+
+      $sql .= implode($this->union, ' UNION ');
+
+      $sql .= sprintf(" %s %s %s;",
+                      $this->group(),
+                      $this->order(),
+                      $this->limit());
+
+
+      return $sql;
   }
+
 
   function insert($e)
   {
