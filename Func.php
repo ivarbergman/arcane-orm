@@ -18,7 +18,7 @@ class Func
 	return "{$this->name}({$exp})";
       }
     else if ($this->value)
-      {	
+      {
 	return "{$this->name}({$this->value})";
       }
     return "{$this->name}()";
@@ -112,7 +112,7 @@ class Func
 	return ;
       }
     $args = "";
-    
+
     foreach ($list as $a)
       {
 	if (is_object($a) && method_exists($a, 'sql'))
@@ -120,7 +120,7 @@ class Func
 	    $args[] = $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $args[] = $a;
 	  }
       }
@@ -130,10 +130,11 @@ class Func
     return $f;
   }
 
+
   public static function exp($exp, $argv)
   {
     $argv = func_get_args();
-    
+
     if (count($argv) == 0)
       {
 	return ;
@@ -148,7 +149,7 @@ class Func
 	    $args[] = $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $args[] = $a;
 	  }
       }
@@ -175,7 +176,7 @@ class Func
       }
     $sql = "";
     $sep = "";
-    
+
     foreach ($list as $a)
       {
 	if ($a instanceof Attribute)
@@ -187,7 +188,7 @@ class Func
 	    $sql .= $sep . $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $sql .= $sep . $a;
 	  }
 	$sep = ", ";
@@ -208,7 +209,7 @@ class Func
       }
     $sql = "";
     $sep = "";
-    
+
     foreach ($list as $a)
       {
 	if ($a instanceof Attribute)
@@ -220,7 +221,7 @@ class Func
 	    $sql .= $sep . $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $sql .= $sep . $a;
 	  }
 	$sep = ", ";
@@ -275,7 +276,7 @@ class Func
       }
     $sql = "";
     $sep = "";
-    
+
     foreach ($list as $a)
       {
 	if ($a instanceof Attribute)
@@ -283,7 +284,7 @@ class Func
 	    $sql .= $sep . $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $sql .= $sep . $a;
 	  }
 	$sep = ", ";
@@ -305,7 +306,7 @@ class Func
       }
     $sql = "";
     $sep = "";
-    
+
     foreach ($list as $a)
       {
 	if ($a instanceof Attribute)
@@ -313,7 +314,7 @@ class Func
 	    $sql .= $sep . $a->sql();
 	  }
 	else
-	  {	    
+	  {
 	    $sql .= $sep . $a;
 	  }
 	$sep = " + ";
@@ -333,6 +334,14 @@ class Func
     $f = new FuncReplace();
     $f->value = "'$match', '$replace'";
     Log::dbg($f->sql());
+    return $f;
+  }
+
+  public static function substring($list)
+  {
+    $list = func_get_args();
+    $f = new FuncSubString();
+    $f->value = implode($list[0],',');
     return $f;
   }
 
@@ -359,9 +368,33 @@ class FuncReplace extends Func
 	return "{$this->name}({$exp}, {$this->value})";
       }
     else if ($this->value)
-      {	
+      {
 	return "{$this->name}({$this->value})";
       }
+    return "{$this->name}()";
+  }
+
+}
+
+
+class FuncSubString extends Func
+{
+
+  public function __construct()
+  {
+    $this->name = "SUBSTRING";
+  }
+
+  public function sql($exp = "")
+  {
+    if ($exp)
+      {
+          return "{$this->name}({$exp}, {$this->value})";
+      }
+    else if ($this->value)
+    {
+        return "{$this->name}({$this->value})";
+    }
     return "{$this->name}()";
   }
 
