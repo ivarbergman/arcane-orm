@@ -17,6 +17,71 @@ class MySQL extends Bridge
       }
     return $sql;
   }
+
+  function expr_list_from_select($e)
+  {
+    $sql = "";
+    $sep = "";
+	$esql = $this->expr_from_select($e);
+	$sql .= $esql ? $sep . $esql : "";
+	$sep = ",\n\t";
+    return $sql;
+  }
+
+  function expr_from_select($e)
+  {
+
+      $sql = array('*');
+    $sep = "";
+
+    $attr = array_merge(array_keys($e->_etx),
+			array_keys($e->_col));
+
+    $attr = array_keys($e->_etx);
+
+    foreach ($attr as $name)
+      {
+	$a = $e->alias();
+	$n = $e->name();
+	$v = $e->_attr[$name];
+
+	if (! $v instanceof Attribute)
+	  {
+	    continue;
+	  }
+
+
+	if ($v->is_scalar())
+	  {
+	    $key = $this->bind($v->value);
+	    $sql[] = $key . ' AS ' . $v->alias;
+	  }
+	else if ($v->is_func())
+	  {
+	    $sql[] = $v->value->sql() . ' As ' . $v->alias;
+	  }
+	else if ($v->is_sql())
+	  {
+	    $sql[] = $v->value . ' as ' . $v->alias;
+	  }
+	else if ($v->is_attribute())
+	  {
+          array_unshift($sql, ''.$v->alias);
+	  }
+	else if ($v->active)
+	  {
+	    $key = $this->bind($v);
+	    $sql[] = $key. '  As '. $v->alias;
+	  }
+
+      }
+    if (count($e->_col) == 0)
+      {
+	$sql = $e->alias().".*";
+      }
+    return implode($sql,",\n\t");
+  }
+
   function expr($e)
   {
 
@@ -297,7 +362,7 @@ class MySQL extends Bridge
   function union($e)
   {
 
-    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s %s %s %s )",
+    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s) %s %s %s ",
 		   $this->select_variant(),
 		   $this->expr_list(),
 		   $this->refs(),
@@ -315,24 +380,43 @@ class MySQL extends Bridge
     return $sql;
   }
 
+  function union_end($e)
+  {
+
+    $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s) %s %s %s ",
+		   $this->select_variant(),
+		   $this->expr_list(),
+		   $this->refs(),
+		   $this->cond(),
+		   $this->collate(),
+		   $this->group(),
+		   $this->order(),
+		   $this->limit());
+    $this->union[] = $sql;
+    $this->entity = array();
+    $this->condition = array();
+    $this->join = array();
+
+    return $e;
+  }
+
   function select_with_union($e)
   {
 
-      $sql = sprintf(" ( SELECT %s %s \nFROM %s \n%s %s ) UNION ",
-                      $this->select_variant(),
-                      $this->expr_list(),
-                      $this->refs(),
-                      $this->cond(),
-                      $this->collate());
+      $e->_ignore_single = true;
 
-      $sql .= implode($this->union, ' UNION ');
+      $sql = sprintf("SELECT %s FROM (  ",
+                      $this->expr_list_from_select($e) );
 
-      $sql .= sprintf(" %s %s %s;",
+      $sql .= implode(array_reverse($this->union), ' UNION ');
+
+      $sql .= sprintf(" ) t %s %s %s;",
                       $this->group(),
                       $this->order(),
                       $this->limit());
 
 
+      Log::dbg($sql);
       return $sql;
   }
 

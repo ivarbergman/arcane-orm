@@ -273,7 +273,6 @@ class Entity extends Base
 
   function load()
   {
-
     if (!$this->active())
       {
 	$q = $this->select();
@@ -581,7 +580,14 @@ class Entity extends Base
   {
       $this->_active = true;
       $_sql = $this->_bridge->union($this);
-      return $_sql;
+      return $this;
+  }
+
+  function union_end()
+  {
+      $this->_ignore_single = true;
+      $this->_bridge->union_end($this);
+      return $this;
   }
 
 

@@ -110,10 +110,10 @@ class Attribute extends Base
   }
 
 
-  function not() 
-  { 
+  function not()
+  {
     $this->not_flag = true;
-    return $this;  
+    return $this;
   }
 
 
@@ -185,7 +185,7 @@ class Attribute extends Base
   }
 
 
-  function in($val) { 
+  function in($val) {
 
     if ($this->active)
       {
@@ -221,10 +221,10 @@ class Attribute extends Base
     return true;
   }
 
-  function group() 
-  {                                                            
+  function group()
+  {
 
-    $this->_bridge->add_group($this);                                                
+    $this->_bridge->add_group($this);
     return true;
   }
 
@@ -248,7 +248,7 @@ class Attribute extends Base
     $this->_bridge->add_order($this, "RAND()");
   }
 
-  function order_field($field, $dir = "ASC") { 
+  function order_field($field, $dir = "ASC") {
 
     $this->_bridge->add_order($this, $dir, $field);
   }
@@ -263,7 +263,7 @@ class Attribute extends Base
 	  {
 	    $a->func[] = Func::$name($args);
 	  }
-	else 
+	else
 	  {
 	    $a->func[] = Func::$name();
 	  }
@@ -295,7 +295,7 @@ class Attribute extends Base
       {
 	$alias = $this->alias().'.';
       }
-    
+
     $sql = $alias . $this->name;
     foreach ($this->func as $func)
       {
@@ -350,7 +350,7 @@ class Attribute extends Base
   }
 
   function assign_lhs($name = null)
-  {    
+  {
     return $this->alias().'.'.$this->name;
   }
 
@@ -376,9 +376,9 @@ class Attribute extends Base
     $code = file_get_contents($file);
     ob_start();
     $source = "?>". $code ."<? ";
-    error_reporting(E_ALL | E_STRICT);  
-    set_error_handler('my_eval_error_handler');  
-    $result = eval($source);  
+    error_reporting(E_ALL | E_STRICT);
+    set_error_handler('my_eval_error_handler');
+    $result = eval($source);
     restore_error_handler();
     $result = ob_get_contents();
     ob_end_clean();

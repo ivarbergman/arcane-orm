@@ -17,6 +17,7 @@ class Base
   public $_pdox;
   public $_active;
   public $_bridge;
+  public $_ignore_single = false;
 
   public function __construct()
   {
@@ -46,7 +47,7 @@ class Base
   {
     if (is_null($database))
       {
-	return $this->_database;    
+	return $this->_database;
       }
 
     $this->_database = $database;
@@ -91,12 +92,13 @@ class Base
 
   function active()
   {
+      Log::dbg("active");
     return $this->_active;
   }
 
   function single()
   {
-    return $this->_bridge->is_single_entity();
+    return !$this->_ignore_single && $this->_bridge->is_single_entity();
   }
 
   function query_count()
@@ -110,11 +112,11 @@ class Base
     $pk = $this->_pk;
     if (count($pk) > 0)
       {
-	$result[$pk] = $this->_attr[$pk]->value;	
+	$result[$pk] = $this->_attr[$pk]->value;
       }
     if (count($pk) == 1)
       {
-	$result = $this->_attr[$pk];	
+	$result = $this->_attr[$pk];
       }
     return $result;
   }
