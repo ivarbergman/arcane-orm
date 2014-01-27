@@ -714,9 +714,16 @@ class Entity extends Base
     return $this->_error;
   }
 
-  function manual()
+  function manual($sql = null)
+  {
+      if ($sql)
+      {
+          $this->_manual = $sql;
+      }
+      else
   {
     return $this->_manual;
+  }
   }
 
 
