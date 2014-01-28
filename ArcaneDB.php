@@ -26,7 +26,7 @@ class ArcaneDB
   {
     //Log::dbg("Arcane::get");
     if (!self::$current)
-      {	
+      {
 	$pdox = $pdox ? $pdox : APdo::get();
 
 	$bridge = new MySql();
@@ -41,7 +41,7 @@ class ArcaneDB
   {
     //Log::dbg("Arcane::db($name)");
     if (!isset(self::$databases[$name]))
-      {	
+      {
 	$pdox = APdo::get($GLOBALS['DB'][$name], $name);
 	$bridge = new MySql();
 	self::$databases[$name] = new ArcaneDB($pdox, $bridge);
@@ -61,7 +61,7 @@ class ArcaneDB
     //Log::dbg($prop);
 
     if (!isset(self::$databases[$dbname]))
-      {	
+      {
 	//Log::dbg('new ArcaneDB');
 	$pdox = APdo::get($prop, $dbname);
 	$bridge = new MySql();
@@ -98,7 +98,7 @@ class ArcaneDB
     $c = self::get_entity_class($name);
     if ($c)
       {
-	$e = new $c($args, $pdox, $bridge);	
+	$e = new $c($args, $pdox, $bridge);
       }
     else
       {
@@ -169,16 +169,16 @@ class ArcaneDB
       }
 
     $c = $GLOBALS["ARCANE_CLASS_PREFIX"]. $database.'__'.$name;
-    if (class_exists($c))
+    if (class_exists($c) && is_subclass_of($c, "Entity"))
       {
 	return $c;
       }
-    
+
     return null;
   }
 
   function __get($db)
-  {   
+  {
     $this->_database = $db;
     return $this;
   }
