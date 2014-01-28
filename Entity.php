@@ -819,7 +819,14 @@ class Entity extends Base
 
   function outer_join($e)
   {
-    $this->_bridge->join("LEFT OUTER JOIN", $this, $e);
+      $entities = func_get_args();
+      $this->_bridge->join("LEFT OUTER JOIN", $this, $entities);
+  }
+
+  function left_join($e)
+  {
+      $entities = func_get_args();
+      $this->_bridge->join("LEFT OUTER JOIN", $this, $entities);
   }
 
 
